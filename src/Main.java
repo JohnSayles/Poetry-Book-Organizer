@@ -5,14 +5,12 @@ import javax.swing.tree.DefaultTreeModel;
 import java.io.File;
 import java.util.Arrays;
 
-import java.awt.Dimension;
-
 public class Main {
 
     private static JTextArea poem_editor;
     private static File current_poem_file;
 
-    // Class for the import book function
+    // Class for the import book function. Defines the two components of a poem.
     private static class ImportedPoem {
 
         String title;
@@ -24,7 +22,7 @@ public class Main {
         }
     }
 
-    // Class for the import book function
+    // Class for the import book function. Defines the two components of a chapter.
     private static class ImportedChapter {
 
         String title;
@@ -38,17 +36,13 @@ public class Main {
 
     public static void main(String[] args) {
 
-        // Create initial window
+        // Sets up the structure of the application window.
         JFrame window = new JFrame("Poetry Book");
         window.setSize(1000, 700);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setLocationRelativeTo(null);
-
-        // Create directory and content window
         JPanel poem_content_window = create_content_window();
         JPanel poem_directory = create_directory();
-
-        // Split the window by directory and content window, then make visible upon initial window
         JSplitPane split_pane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, poem_directory, poem_content_window);
         split_pane.setDividerLocation(250);
         window.add(split_pane);
@@ -70,17 +64,15 @@ public class Main {
         if (chapter_order != null) {
             for (String chapter_name : chapter_order) {
 
-                // Turn the string chapter name into a path representation of the chapter file
                 File chapter_folder = new File(book_folder, chapter_name);
 
-                // Check if the chapter exists in the current book, then add poems and chapter in order based on the order file
                 if (chapter_folder.isDirectory()) {
                     load_chapter(book_node, chapter_folder);
                 }
             }
 
         } else {
-            // If there are chapter folders but no order file, just sort alphabetically
+
             if (chapter_folders != null) {
                 Arrays.sort(chapter_folders);
 
@@ -92,7 +84,6 @@ public class Main {
             }
         }
 
-        // Used for displaying tree on screen
         JTree book_tree = new JTree(book_node);
 
         // Manager for nodes in the tree
@@ -101,14 +92,11 @@ public class Main {
         // Whatever is selected in the directory will be displayed in the poem editor
         book_tree.addTreeSelectionListener((TreeSelectionEvent event) -> load_poem(book_tree));
 
-        // Set a panel for directory side of the screen
         JPanel directory_panel = new JPanel();
         directory_panel.setLayout(new java.awt.BorderLayout());
 
-        // Set a pane to display the directory
         JScrollPane tree_scroll_pane = new JScrollPane(book_tree);
 
-        // Set a pane to display button options
         JButton new_chapter_button = new JButton("New Chapter");
         JButton new_poem_button = new JButton("New Poem");
         JButton rename_button = new JButton("Rename");
@@ -135,7 +123,6 @@ public class Main {
         button_panel.add(new_book_button);
         button_panel.add(import_book_button);
 
-        // Set listeners for buttons
         new_chapter_button.addActionListener(event -> create_new_chapter(book_node, tree_model));
         new_poem_button.addActionListener(event -> create_new_poem(book_tree, tree_model));
         rename_button.addActionListener(event -> rename_item(book_tree, tree_model));
@@ -171,9 +158,8 @@ public class Main {
 
             File poem_file = new File(get_book_folder(), chapter_name + "/" + poem_name + "/poem.txt");
 
-            current_poem_file = poem_file; // Save current poem location
+            current_poem_file = poem_file;
 
-            // If poem content exists, read it and put it in the poem editor
             if (poem_file.exists()) {
                 try {
                     String poem_text = java.nio.file.Files.readString(poem_file.toPath());
@@ -197,7 +183,6 @@ public class Main {
             if (!chapter_folder.exists()) {
                 boolean folder_created = chapter_folder.mkdir(); // Create new folder, then save if the operation worked
 
-                // If the folder was successfully created, update the tree model so it appears on screen
                 if (folder_created) {
                     DefaultMutableTreeNode new_chapter_node = new DefaultMutableTreeNode(chapter_name);
                     tree_model.insertNodeInto(new_chapter_node, book_node, book_node.getChildCount());
@@ -221,14 +206,13 @@ public class Main {
 
         String chapter_name = selected_node.toString();
 
-        File new_poem_folder = new File(get_book_folder(), chapter_name + "/" + poem_name); // Create location representation for new poem
+        File new_poem_folder = new File(get_book_folder(), chapter_name + "/" + poem_name);
 
         if (new_poem_folder.exists()) {
             JOptionPane.showMessageDialog(null, "A poem with that name already exists.");
             return;
         }
 
-        // Check if folder was actually created. If it wasn't, exit so the program doesn't break
         boolean folder_created = new_poem_folder.mkdir();
         if (!folder_created) {return;}
 
@@ -250,13 +234,12 @@ public class Main {
     private static void rename_item(JTree book_tree, DefaultTreeModel tree_model) {
         DefaultMutableTreeNode selected_node = (DefaultMutableTreeNode) book_tree.getLastSelectedPathComponent();
 
-        // Prevent renaming nothing
         if (selected_node == null) {
             JOptionPane.showMessageDialog(null, "Please select a chapter or poem first.");
             return;
         }
 
-        // Prevent renaming book
+        // Prevent renaming book. This is a flaw, but I will fix it eventually.
         if (selected_node.getLevel() == 0) {
             JOptionPane.showMessageDialog(null,"The book itself cannot be renamed.");
             return;
@@ -273,10 +256,8 @@ public class Main {
 
         String current_name = selected_node.toString(); // Stores the current name of the poem the user wishes to rename
 
-        // Display renaming prompt
         String new_name = JOptionPane.showInputDialog("Enter new " + item_type + " name:", current_name);
 
-        // Cancel if no name is entered
         if (new_name == null || new_name.isBlank()) {return;}
 
         File current_folder;
@@ -296,7 +277,6 @@ public class Main {
 
         boolean renamed = current_folder.renameTo(renamed_folder);  // Stores whether or not the item was renamed, and renames filesystem title
 
-        // Dialog if rename doesn't work
         if (!renamed) {
             JOptionPane.showMessageDialog(null, "Unable to rename " + item_type + ".");
             return;
@@ -331,13 +311,11 @@ public class Main {
     private static void delete_item(JTree book_tree, DefaultTreeModel tree_model) {
         DefaultMutableTreeNode selected_node = (DefaultMutableTreeNode) book_tree.getLastSelectedPathComponent();
 
-        // Notify if nothing was selected
         if (selected_node == null) {
             JOptionPane.showMessageDialog(null, "Please select a chapter or poem first.");
             return;
         }
 
-        // Notify that book cannot be deleted
         if (selected_node.getLevel() == 0) {
             JOptionPane.showMessageDialog(null, "The book itself cannot be deleted.");
             return;
@@ -353,7 +331,6 @@ public class Main {
 
         String item_name = selected_node.toString();    // Convert item name to string to get position in directory
 
-        // Prompt deletion confirmation
         int response = JOptionPane.showConfirmDialog(null, "Are you SURE... you want to delete " + item_type + ": " + item_name, "Confirm Deletion", JOptionPane.YES_NO_OPTION);
         if (response != JOptionPane.YES_OPTION) {return;}
 
@@ -374,7 +351,6 @@ public class Main {
 
         boolean deleted = delete_folder(item_folder);
 
-        // In case the deletion does not work
         if (!deleted) {
             JOptionPane.showMessageDialog(null, "Unable to delete " + item_type + ".");
             return;
@@ -390,7 +366,6 @@ public class Main {
             parent_folder = new File(get_book_folder(), chapter_name);
         }
 
-        // Update GUI that node was deleted
         tree_model.removeNodeFromParent(selected_node);
 
         save_order(parent_node, parent_folder);
@@ -425,10 +400,8 @@ public class Main {
     private static void move_item(JTree book_tree, DefaultTreeModel tree_model, int direction) {
         DefaultMutableTreeNode selected_node = (DefaultMutableTreeNode) book_tree.getLastSelectedPathComponent();
 
-        // Cancel if nothing was selected
         if (selected_node == null) {return;}
 
-        // Cancel if trying to move book
         if (selected_node.getLevel() == 0) {return;}
 
 
@@ -444,7 +417,7 @@ public class Main {
         }
 
         tree_model.removeNodeFromParent(selected_node);    // You have to remove the node to change its position
-        tree_model.insertNodeInto(selected_node, parent_node, new_position);    //Insert node in new position
+        tree_model.insertNodeInto(selected_node, parent_node, new_position);
 
         // Make sure the item moved is still selected
         book_tree.setSelectionPath(new javax.swing.tree.TreePath(selected_node.getPath()));
@@ -465,7 +438,6 @@ public class Main {
     private static void move_poem(JTree book_tree, DefaultTreeModel tree_model) {
         DefaultMutableTreeNode selected_node = (DefaultMutableTreeNode) book_tree.getLastSelectedPathComponent();
 
-        // Check if a poem is selected
         if (selected_node == null || selected_node.getLevel() != 2) {
             JOptionPane.showMessageDialog(null, "You must select a poem.");
             return;
@@ -475,13 +447,11 @@ public class Main {
         DefaultMutableTreeNode current_chapter = (DefaultMutableTreeNode) selected_node.getParent();
         java.util.List<String> saved_chapter_order = read_order(get_book_folder());
 
-        // Make sure chapter order txt file actually exists
         if (saved_chapter_order == null) {
             JOptionPane.showMessageDialog(null, "Could not find the chapter order.");
             return;
         }
 
-        // List of chapter names that will be operated on
         java.util.List<String> chapter_names = new java.util.ArrayList<>(saved_chapter_order);
         chapter_names.remove(current_chapter.toString());
 
@@ -491,13 +461,9 @@ public class Main {
             return;
         }
 
-        // Ask user which chapter to move the poem to
         String destination_chapter = (String) JOptionPane.showInputDialog(null, "Move poem to which chapter?", "Move Poem", JOptionPane.QUESTION_MESSAGE, null, chapter_names.toArray(), null);
 
-        // Cancel operation if user stops dialogue
-        if (destination_chapter == null) {
-            return;
-        }
+        if (destination_chapter == null) {return;}
 
         // Get name of poem to be moved and current chapter in which it is residing
         String poem_name = selected_node.toString();
@@ -506,7 +472,6 @@ public class Main {
         File old_poem_folder = new File(get_book_folder(), current_chapter_name + "/" + poem_name);
         File new_poem_folder = new File(get_book_folder(), destination_chapter + "/" + poem_name);
 
-        // Don't move the poem if one with the same name already exists
         if (new_poem_folder.exists()) {
             JOptionPane.showMessageDialog(null, "Two poems with the same name cannot exist in one chapter.");
             return;
@@ -515,7 +480,6 @@ public class Main {
         // Move the poem folder to the new chapter (rename to can actually change the file path)
         boolean folder_moved = old_poem_folder.renameTo(new_poem_folder);
 
-        // Display if poem was not moved
         if (!folder_moved) {
             JOptionPane.showMessageDialog(null, "The poem could not be moved.");
             return;
@@ -562,20 +526,16 @@ public class Main {
         JPanel content_panel = new JPanel();
         content_panel.setLayout(new java.awt.BorderLayout());
 
-        // Set display settings
         poem_editor = new JTextArea();
         poem_editor.setFont(new java.awt.Font("Serif", java.awt.Font.PLAIN,18));
         poem_editor.setLineWrap(true);
         poem_editor.setWrapStyleWord(true);
 
-        // Add scroll panel for poem and save button
         JScrollPane editor_scroll_pane = new JScrollPane(poem_editor);
         JButton save_button = new JButton("Save");
 
-        // Add listener for save button that writes changes to file
         save_button.addActionListener(event -> save_poem());
 
-        // Set scroll panel location and save button upon the content_panel
         content_panel.add(editor_scroll_pane, java.awt.BorderLayout.CENTER);
         content_panel.add(save_button, java.awt.BorderLayout.SOUTH);
 
@@ -654,8 +614,8 @@ public class Main {
     private static void load_chapter(DefaultMutableTreeNode book_node, File chapter_folder) {
         DefaultMutableTreeNode chapter_node = new DefaultMutableTreeNode(chapter_folder.getName());
 
-        load_poems(chapter_node, chapter_folder);   // Load the poems of the chapter
-        book_node.add(chapter_node);    // Where the loaded chapter should go
+        load_poems(chapter_node, chapter_folder);
+        book_node.add(chapter_node);
 
     }
 
@@ -667,7 +627,6 @@ public class Main {
         // Return nothing if there isn't an order (this is really badddd)
         if (!order_file.exists()) {return null;}
 
-        // Return list of the order
         try {
             return java.nio.file.Files.readAllLines(order_file.toPath());
         } catch (java.io.IOException e) {
@@ -679,14 +638,12 @@ public class Main {
     private static void export_book() {
         String book_rtf = create_book_rtf();
 
-        // Creates Save As Windows dialogue
         JFileChooser file_chooser = new JFileChooser();
         file_chooser.setDialogTitle("Export Book");
         file_chooser.setSelectedFile(new File("Poetry Book.rtf"));  // Sets file name
 
         int result = file_chooser.showSaveDialog(null); // Displays save dialogue
 
-        // First make sure Save was actually clicked
         if (result == JFileChooser.APPROVE_OPTION) {
             File export_file = file_chooser.getSelectedFile();
 
@@ -783,10 +740,8 @@ public class Main {
 
     private static String read_book_title() {
 
-        // Get title
         File title_file = new File(get_book_folder(), "title.txt");
 
-        // Check if the title exists
         if (title_file.exists()) {
             try {
                 return java.nio.file.Files.readString(title_file.toPath()).trim();
@@ -802,7 +757,8 @@ public class Main {
                 .replace("\\", "\\\\")
                 .replace("{", "\\{")
                 .replace("}", "\\}")
-                .replace("\r\n", "\\line\n")
+                .replace("\r\n", "\n")
+                .replace("\r", "\n")
                 .replace("\n", "\\line\n");
     }
 
@@ -819,19 +775,16 @@ public class Main {
 
     private static void new_book(DefaultMutableTreeNode book_node, DefaultTreeModel tree_model) {
 
-        // Confirm book deletion
         int choice = JOptionPane.showConfirmDialog(null, "This will permanently delete all chapters and poems.\n\n" + "Are you sure you want to start a new book?", "New Book", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
         if (choice != JOptionPane.YES_OPTION) {return;}
 
         String book_title = JOptionPane.showInputDialog(null, "Enter the title of the new book:", "New Book", JOptionPane.PLAIN_MESSAGE);
 
-        // Exit if cancel was selected
         if (book_title == null) {return;}
 
         File book_folder = get_book_folder();
 
-        // Delete existing book
         delete_folder(book_folder);
 
         // Create a new empty book folder
@@ -840,7 +793,6 @@ public class Main {
         // Create location representation of book title txt
         File title_file = new File(book_folder, "title.txt");
 
-        // Write title
         try {
             java.nio.file.Files.writeString(title_file.toPath(), book_title);
         } catch (java.io.IOException e) {
@@ -880,12 +832,10 @@ public class Main {
                 String imported_title = get_imported_book_title(book_rtf);
                 java.util.List<ImportedChapter> imported_chapters = get_imported_book(book_rtf);
 
-                // Confirm choice to replace existing book
                 int choice = JOptionPane.showConfirmDialog(null, "Import \"" + imported_title + "\"?\n\n" + "This will permanently replace the current book.", "Import Book", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                 if (choice != JOptionPane.YES_OPTION) {return;}
 
-                // Create imported book
                 create_imported_book(imported_title, imported_chapters, book_node, tree_model);
 
                 JOptionPane.showMessageDialog(null, "Book imported successfully.");
@@ -983,7 +933,6 @@ public class Main {
 
     private static java.util.List<ImportedPoem> get_imported_poems(String chapter_rtf) {
 
-        // Where imported poems will be stored
         java.util.List<ImportedPoem> poems = new java.util.ArrayList<>();
 
         // Start and end encodings for poem titles and poem text
@@ -1048,10 +997,8 @@ public class Main {
 
         File book_folder = get_book_folder();
 
-        // Delete existing book
         delete_folder(book_folder);
 
-        // Create new empty book folder
         book_folder.mkdir();
 
         // Create title.txt
@@ -1136,7 +1083,6 @@ public class Main {
         // Get location where book file will be placed
         File book_folder = new File(poetry_book_folder, "book");
 
-        // Create book folder if it doesn't exist yet
         if (!book_folder.exists()) {
             book_folder.mkdirs();
         }
